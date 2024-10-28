@@ -1,5 +1,5 @@
-import shutil, tempfile, os, telebot, flet as ft, webbrowser, threading
-from . import accessKeys as key
+import shutil, tempfile, os, telebot, webbrowser, threading, flet as ft
+from . import configHandler as config
 
 '''
 Descripción de las constantes:
@@ -25,12 +25,14 @@ Descripción de las variables:
 Nota: rootPath es un argumento que es recibido desde el main, es la ruta de ejecución del .exe
 '''
 
-TEMP_NAME_DIRECTORY = '.TelegramBot'
-TELEGRAM_TEMP_DIRECTORY = os.path.join(tempfile.gettempdir(), TEMP_NAME_DIRECTORY)
-CONFIG_FILE = TELEGRAM_TEMP_DIRECTORY + '\\config.cfg'
-README_FILE = TELEGRAM_TEMP_DIRECTORY + '\\Leeme.txt'
+configPaths = config.getConfigPath()
 
-#!
+TEMP_NAME_DIRECTORY = configPaths[0]
+TELEGRAM_TEMP_DIRECTORY = configPaths[1]
+CONFIG_FILE = configPaths[2]
+README_FILE = configPaths[3]
+
+#? Función para verificar la existencia del config.cfg o crear uno nuevo.
 def verifyDirectory(rootPath):
     readmeSource = rootPath + '\\assets\\readme'
     configSource = rootPath + '\\assets\\config.cfg'
@@ -50,9 +52,9 @@ def verifyDirectory(rootPath):
     else:
         print('-> ¡Se ha encontrado una configuración existente.\n-> Iniciando una nueva configuración...\n')
     
-#!
+#? Inicializa el bot de Telegram.
 def testConnection():
-    configValues = key.getConfigValues()
+    configValues = config.getConfigValues(CONFIG_FILE)
     
     config_api_key = configValues[0]
     config_chat_id = configValues[1]
@@ -69,21 +71,19 @@ def testConnection():
         print("Error de conexión, revisar el token del API")
         return False
 
-#!
+#? Interfaz de configuración del bot.
 def configureGUI(page: ft.Page):
     #. -> Configuración APP
     page.title = "Metin2 Telegram Reporter | By: remk0r3"
     page.theme_mode = ft.ThemeMode.SYSTEM
     page.window_width = 550
-    page.window_height = 320
+    page.window_height = 300
     page.window_resizable = False
     page.padding = 25
     page.scroll = ft.ScrollMode.HIDDEN
+    page.window_always_on_top = True
 
     #. -> Elementos
-    #? Textos
-    txt_Confirmation = ft.Text(value = "Datos almacenados correctamente.", text_align = 'center')
-
     #? Textfields:
     txtField_apiToken = ft.TextField(label = "Token API HTTP", hint_text = "Ingrese su token 'API HTTP' de su bot en Telegram.")
     txtField_chatId = ft.TextField(label = "Chat ID", hint_text = "Ingrese su Chat ID de Telegram.")
@@ -93,11 +93,11 @@ def configureGUI(page: ft.Page):
         ft.TextButton("¿Cómo obtener el token del API HTTP?", style=ft.ButtonStyle(color=ft.colors.BLUE), on_click=lambda e: webbrowser.open("https://www.youtube.com/watch?v=VLXElCqqcsg")),
         ft.TextButton("¿Cómo obtener el Chat ID?", style=ft.ButtonStyle(color=ft.colors.BLUE), on_click=lambda e: webbrowser.open("https://www.youtube.com/watch?v=Fzr88Iz75Uo"))
         ]))
-    
     modal_connError = ft.AlertDialog(title=ft.Text("Error: El token del 'API HTTP' no pudo conectarse con el bot, compruebe que el token sea correcto e intente nuevamente."))
+    modal_connTest = ft.AlertDialog(title=ft.Text("Datos almacenados correctamente, ¡¡NO CIERRE EL PROGRAMA!!. \n\n Para continuar, vaya a Telegram y envie un mensaje o inicie la interacción con su bot."))
 
     #. -> Obtener valores de la configuración
-    configValues = key.getConfigValues()
+    configValues = config.getConfigValues(CONFIG_FILE)
 
     txtField_apiToken.value = configValues[0]
     txtField_chatId.value = configValues[1]
@@ -119,41 +119,29 @@ def configureGUI(page: ft.Page):
             #? Se vuelven a obtener los valores del textField y se guardan en el config.cfg
             token_api = txtField_apiToken.value
             token_chat = txtField_chatId.value
-            key.setConfigValues(token_api, token_chat)
+            config.setConfigValues(token_api, token_chat, CONFIG_FILE)
 
             #? Se valida la conexión al API
             isValid = testConnection()
             if isValid == False:
                 page.open(modal_connError)
                 txtField_apiToken.value = ''
-                key.setConfigValues('', token_chat)
+                config.setConfigValues('', token_chat, CONFIG_FILE)
             else:
-                # Mostrar mensaje de confirmación
-                page.clean()
-                page.add(txt_Confirmation)
-                # Iniciar bot.polling
-                # startBotPolling()
-                
-    
-
-            
+                #? testConnection intenta conectarse a la API, de lograrlo se queda la conexión abierta, de allí que en
+                #? este else solamente se muestre una ventana modal al usuario, pues internamente la comunicación ya esta iniciada.
+                page.open(modal_connTest)
 
         page.update()
     
-
-    page.add(txtField_apiToken, txtField_chatId, ft.ElevatedButton("Say hello!", on_click=validateFields), ft.ElevatedButton("Ayuda", on_click=lambda e: page.open(modal_help)))
+    page.add(txtField_apiToken, txtField_chatId, ft.ElevatedButton("Guardar e Iniciar", on_click=validateFields), ft.ElevatedButton("Ayuda", on_click=lambda e: page.open(modal_help)))
 
 
 def configure(rootPath):
     #? 1. Crear el directorio en temp, si ya existe preservarlo, si no existe crearlo con configuraciones default.
     verifyDirectory(rootPath)
-    
-    #? 2. Capturar API Key y Chat ID
-    #setConfigValues()
-    
-    #? 3. Testear conexión
-    #testConnection()
 
+    #? 2. Inicia el configurador
     ft.app(configureGUI)
 
 

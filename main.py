@@ -1,7 +1,8 @@
 
 import sys, os
-from modules import help as hp
-from modules import configuration as config
+from modules import configManager as config
+from modules import message as msg
+from modules import screenshot
 
 #* Constantes de desarrollo
 DEVELPOMENT_STATE = False
@@ -18,13 +19,12 @@ else:
 
 #. Inicio del bot
 ARGUMENTS_LENGTH = len(sys.argv)
-VALID_ARGUMENTS = ['-h', '-c', '-m', '-s', '-e']
+VALID_ARGUMENTS = ['-c', '-m', '-s']
 ARGUMENTS = sys.argv
 
 if __name__ == "__main__":
     if ARGUMENTS_LENGTH <= 1:
         print("Metin2 Telegram Bot - By: rem0kr3\n")
-        hp.showHelp()
         config.configure(rootPath)
 
     else:
@@ -34,10 +34,17 @@ if __name__ == "__main__":
                 config.configure(rootPath)
 
             case '-m':
-                print("Enviando mensaje.")
+                if ARGUMENTS_LENGTH == 3:
+                    print("Enviando mensaje...")
+                    msg.sendMessage(ARGUMENTS[2])
+                else:
+                    print("Error, se esperaba un argumento.")
+                    msg.sendMessage()
+                #
 
             case '-s':
                 print("Enviando captura de pantalla.")
+                screenshot.sendEvidence()
 
             case _:
                 print("Iniciando configuración.")
