@@ -6,9 +6,6 @@ from modules import screenshot
 
 #* Constantes de desarrollo
 DEVELPOMENT_STATE = False
-""" TELEGRAM_API_KEY = "7205288012:AAHWaaEidxCU-fV2kaCtlyvJzUkFsJ3LL1M"
-TELEGRAM_CHAT_ID = "1300633499"
- """
 
 #* Determinación de que rutas elegir en caso de ser necesario.
 if DEVELPOMENT_STATE == True:
