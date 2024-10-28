@@ -25,13 +25,10 @@ if __name__ == "__main__":
     if ARGUMENTS_LENGTH <= 1:
         print("Metin2 Telegram Bot - By: rem0kr3\n")
         hp.showHelp()
+        config.configure(rootPath)
 
     else:
         match ARGUMENTS[1]:
-            case '-h':
-                print("Metin2 Telegram Bot - By: rem0kr3\n")
-                hp.showHelp()
-
             case '-c':
                 print("Iniciando configuración.")
                 config.configure(rootPath)
@@ -43,4 +40,5 @@ if __name__ == "__main__":
                 print("Enviando captura de pantalla.")
 
             case _:
-                print("Error, argumento invalido.")
+                print("Iniciando configuración.")
+                config.configure(rootPath)

@@ -1,4 +1,5 @@
-import shutil, tempfile, os, configparser, telebot, sys, flet as ft, webbrowser, threading
+import shutil, tempfile, os, telebot, flet as ft, webbrowser, threading
+from . import accessKeys as key
 
 '''
 Descripción de las constantes:
@@ -48,34 +49,19 @@ def verifyDirectory(rootPath):
         print('-> ¡Configuración inicial creada con éxito!\n')
     else:
         print('-> ¡Se ha encontrado una configuración existente.\n-> Iniciando una nueva configuración...\n')
-
-#!
-def setConfigValues(token_api, token_chat):
-    # Lectura del archivo de configuración.
-    config = configparser.ConfigParser()
-    config.read(CONFIG_FILE)
-
-    # Escritura de valores.
-    config.set('Telegram', 'TELEGRAM_API_KEY', token_api)
-    config.set('Telegram', 'TELEGRAM_CHAT_ID', token_chat)
-
-    # Guardar los cambios en el archivo de configuración
-    with open(CONFIG_FILE, 'w') as configurationFile:
-        config.write(configurationFile)
     
 #!
 def testConnection():
-    config = configparser.ConfigParser()
-    config.read(CONFIG_FILE)
-
-    config_api_key = config.get('Telegram', 'TELEGRAM_API_KEY')
-    config_chat_id = config.get('Telegram', 'TELEGRAM_CHAT_ID')
+    configValues = key.getConfigValues()
+    
+    config_api_key = configValues[0]
+    config_chat_id = configValues[1]
 
     try:
         bot = telebot.TeleBot(config_api_key)
         @bot.message_handler(func=lambda message: True)
         def handle_message(message):
-            bot.reply_to(message, f"Hola {message.from_user.first_name} 👋, la configuración ha sido exitosa!! 🎉\n\nSolo falta verificar que '{config.get('Telegram', 'TELEGRAM_CHAT_ID')}' sea el CHAT ID que te proporciono @userinfobot.\n\nSi los datos son correctos la configuración ha finalizado y puedes cerrar el programa de configuración, de lo contrario cierra y vuelve a iniciar la configuración. 🫠\n\n⚠️ Importante ⚠️: El API Token de este bot debe ser confidencial, nunca lo compartas pues este bot podría ser intervenido por terceros. 👀")
+            bot.reply_to(message, f"Hola {message.from_user.first_name} 👋, la configuración ha sido exitosa!! 🎉\n\nSolo falta verificar que '{config_chat_id}' sea el CHAT ID que te proporciono @userinfobot.\n\nSi los datos son correctos la configuración ha finalizado y puedes cerrar el programa de configuración, de lo contrario cierra y vuelve a iniciar la configuración. 🫠\n\n⚠️ Importante ⚠️: El API Token de este bot debe ser confidencial, nunca lo compartas pues este bot podría ser intervenido por terceros. 👀")
 
         threading.Thread(target=bot.polling, daemon=True).start()
         return True  # Indica que la conexión es exitosa
@@ -111,11 +97,10 @@ def configureGUI(page: ft.Page):
     modal_connError = ft.AlertDialog(title=ft.Text("Error: El token del 'API HTTP' no pudo conectarse con el bot, compruebe que el token sea correcto e intente nuevamente."))
 
     #. -> Obtener valores de la configuración
-    config = configparser.ConfigParser()
-    config.read(CONFIG_FILE)
+    configValues = key.getConfigValues()
 
-    txtField_apiToken.value = config.get('Telegram', 'TELEGRAM_API_KEY')
-    txtField_chatId.value = config.get('Telegram', 'TELEGRAM_CHAT_ID')
+    txtField_apiToken.value = configValues[0]
+    txtField_chatId.value = configValues[1]
 
     #. -> Funciones
 
@@ -134,14 +119,14 @@ def configureGUI(page: ft.Page):
             #? Se vuelven a obtener los valores del textField y se guardan en el config.cfg
             token_api = txtField_apiToken.value
             token_chat = txtField_chatId.value
-            setConfigValues(token_api, token_chat)
+            key.setConfigValues(token_api, token_chat)
 
             #? Se valida la conexión al API
             isValid = testConnection()
             if isValid == False:
                 page.open(modal_connError)
                 txtField_apiToken.value = ''
-                setConfigValues('', token_chat)
+                key.setConfigValues('', token_chat)
             else:
                 # Mostrar mensaje de confirmación
                 page.clean()

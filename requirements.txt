@@ -1,3 +1,5 @@
 requests
 telebot
 pillow
+flet
+auto-py-to-exe
